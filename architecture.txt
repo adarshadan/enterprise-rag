@@ -1,0 +1,37 @@
+SYSTEM DESIGN
+
+Input: User Query
+  ↓
+[Query Preprocessing]
+  - Normalize text
+  - Detect intent + metadata filters
+  ↓
+[Semantic Cache Check] (GPTCache)
+  - If cosine_similarity > 0.95 to cached query → return cached response
+  - Else → proceed to retrieval
+  ↓
+[Hybrid Retrieval]
+  - BM25 keyword search (k=10)
+  - Semantic search with reranking (k=5)
+  - Ensemble weighted [0.6 BM25, 0.4 semantic]
+  - Filter by metadata (doc_type, date_range)
+  ↓
+[Context Optimization]
+  - Rerank top-10 by relevance score
+  - Token budget check (max 3000 context tokens)
+  - Prompt compression (LLMLingua) if over budget
+  ↓
+[Generation]
+  - LLM: Groq llama-3.1-70b (fast + cheap)
+  - Temperature: 0.3 (grounded answers)
+  - Max tokens: 1024
+  ↓
+[Cache Store]
+  - Store query + response in GPTCache
+  - TTL: 7 days
+  ↓
+[Output + Observability]
+  - Return: answer + source_citations + confidence_score
+  - Log to LangSmith (latency, tokens, cache hit rate)
+  ↓
+Response to User

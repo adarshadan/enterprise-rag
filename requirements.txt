@@ -1,0 +1,17 @@
+fastapi>=0.100.0
+uvicorn>=0.20.0
+pydantic>=2.0
+langchain>=0.1.0
+langchain-groq
+langchain-huggingface
+chromadb
+gptcache
+sentence-transformers
+rank-bm25
+langsmith
+python-dotenv
+numpy
+langchain-community>=0.0.10
+pypdf>=3.0.0
+gptcache
+tenacity>=8.0.0
