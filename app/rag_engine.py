@@ -18,7 +18,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 
 # Configure Production Logging Layout
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("RAGEngine")
 
 LOCAL_MODEL_PATH = "/app/models/all-mpnet-base-v2"
@@ -30,6 +30,7 @@ class RAGEngine:
     def __init__(self):
         # Thread safety primitive for disk I/O operations
         self.cache_lock = threading.Lock()
+        self.state_lock = threading.RLock()
         
         groq_api_key = os.getenv("GROQ_API_KEY")
         if not groq_api_key:
@@ -40,7 +41,7 @@ class RAGEngine:
             model=os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
             api_key=groq_api_key,
             temperature=0.3,
-            request_timeout=15  # Increased timeout from 5s to 15s for high-load reliability
+            request_timeout=60  # Increased timeout from 5s to 60s for high-load reliability
         )
         
         model_path_or_name = LOCAL_MODEL_PATH if os.path.exists(LOCAL_MODEL_PATH) else os.getenv("HF_EMBEDDING_MODEL")
@@ -153,7 +154,6 @@ class RAGEngine:
         """Loads, chunks, indexes, and builds hybrid ensemble retrieval engines."""
         if not os.path.exists(docs_path):
             raise FileNotFoundError(f"Source file not found at: {docs_path}")
-
         from langchain_community.document_loaders import PyPDFLoader
         from langchain_text_splitters import RecursiveCharacterTextSplitter
         
@@ -195,7 +195,6 @@ class RAGEngine:
     @traceable(name="rag_query", tags=["query"])
     def query(self, *args, **kwargs) -> Tuple[str, List[str], float, float, float, bool]:
         """Runs the semantic cache lookups, falling back to hybrid RAG if cache misses."""
-        
         # Extract the question whether it's passed positionally or via a keyword argument
         if "question" in kwargs:
             question = kwargs["question"]
@@ -282,15 +281,17 @@ class RAGEngine:
         # Append and write back to memory maps safely under isolation checks
         if query_vector is not None and answer:
             try:
-                self.cache_data.append({
-                    "question": question,
-                    "answer": answer,
-                    "embedding": query_vector.tolist()
-                })
-                self._save_cache()
+                with self.cache_lock:
+                    self.cache_data.append({
+                        "question": question,
+                        "answer": answer,
+                        "embedding": query_vector.tolist()
+                    })
+                    self._save_cache()
             except Exception as cache_ex:
                 logger.warning(f"Failed to record entry to database layout layers: {str(cache_ex)}")
         
         return answer, sources, confidence, retrieval_time, generation_time, False
+            
 
 rag_engine = RAGEngine()
