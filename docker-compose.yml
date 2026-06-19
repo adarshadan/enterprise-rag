@@ -1,5 +1,3 @@
-#version: '3.8'
-
 services:
   rag-api:
     build: .
@@ -9,11 +7,12 @@ services:
       - GROQ_API_KEY=${GROQ_API_KEY}
       - GROQ_MODEL=llama-3.1-8b-instant
       - HF_EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2
+      - LANGSMITH_API_KEY=${LANGSMITH_API_KEY}
+      - LANGSMITH_PROJECT=enterprise-rag
     volumes:
       - ./data:/app/data
       - pip-cache:/root/.cache/pip
-    # Updated to run the root main.py file directly with uvicorn for clean reloading
-    command: python -m app.main --host 0.0.0.0 --port 8000 --reload
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 volumes:
   pip-cache:
