@@ -67,17 +67,17 @@ JSON
   "status": "healthy"
 }
 2. Load Documents
-Ingest a local PDF document, split it into chunks, reconstruct sections, and populate both the vector and keyword index.
+Ingest a PDF document via JSON body.
 
 Method: POST
-
 URL: /load
+Headers: Content-Type: application/json
 
-Query Parameters:
-
-file_path (string): Absolute path inside the container to the PDF file (e.g., /app/data/indian-penal-code.pdf).
-
-collection (string, optional): Target database partition. Defaults to "default".
+Request Body:
+{
+  "file_path": "/app/data/indian-penal-code.pdf",
+  "collection": "test"
+}
 
 Response:
 
@@ -117,12 +117,20 @@ JSON
 📁 Project Directory Structure
 Plaintext
 enterprise-rag/
+
 ├── app/
-│   ├── __init__.py
-│   └── rag_engine.py      # Core RAG logic, loaders, retrievers & hybrid pipelines
-├── data/                  # Local directory for PDFs and persistent Chroma databases
-├── Dockerfile             # Multi-stage/cached Docker recipe with baked-in models
-├── docker-compose.yml     # Application compose orchestrator
-├── main.py                # FastAPI app initialization and route configurations
-├── requirements.txt       # Python dependencies
-└── .env                   # Local environment variable
+│   ├── main.py              # FastAPI endpoints
+│   └── rag_engine.py        # Core RAG logic
+│   └── locustfile.py        # Load testingc
+├── tests/
+│   ├── init.py
+│   └── test_health.py       # Unit tests
+├── .github/workflows/
+│   └── ci.yml               # GitHub Actions CI/CD
+├── data/                    # PDFs and vector stores
+├── Dockerfile               # Docker image with embedded models
+├── docker-compose.yml       # Local development stack
+├── evals.py                 # Evaluation metrics
+├── requirements.txt         # Python dependencies
+├── README.md                # This file
+└── .env                     # Configuration (not in git)
