@@ -11,8 +11,13 @@ jobs:
         with:
           python-version: 3.11
       - run: pip install -r requirements.txt
-      - name: Create .env for tests
-        run: echo "GROQ_API_KEY=test_key" > .env
+      - name: Create .env
+        run: |
+          echo "GROQ_API_KEY=test_key" > .env
+          echo "HF_EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2" >> .env
+          echo "GROQ_MODEL=llama-3.1-8b-instant" >> .env
+          echo "LANGSMITH_API_KEY=test_key" >> .env
+          echo "LANGSMITH_PROJECT=enterprise-rag" >> .env
       - run: python -m pytest tests/ -v
   
   docker:
