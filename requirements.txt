@@ -17,3 +17,4 @@ gptcache
 tenacity>=8.0.0
 ragas>=0.0.20
 datasets>=2.0
+pytest
